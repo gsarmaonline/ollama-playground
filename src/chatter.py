@@ -68,6 +68,35 @@ class Chatter:
         docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
         prompt = self.prompt.invoke({"question": question, "context": docs_content})
         response: BaseMessage = self.llm.invoke(prompt)
-        print(response.content, response.response_metadata)
+        #print(response.content, response.response_metadata)
         return response.content # type: ignore
+
+    def load_pdf(self, file_path: str, chunk_size: int = 1500, chunk_overlap: int = 200) -> List[Document]:
+        """Load and process PDF file for RAG."""
+        from formats.pdf import PdfExtractor
+        
+        extractor = PdfExtractor()
+        pdf_text = extractor.extract_with_pdfplumber(file_path)
+        
+        # Create a document with PDF metadata
+        doc = Document(
+            page_content=pdf_text,
+            metadata={
+                "source": file_path,
+                "type": "pdf",
+                "filename": file_path.split("/")[-1]
+            }
+        )
+        
+        # Split the document into chunks
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, 
+            chunk_overlap=chunk_overlap
+        )
+        all_splits = text_splitter.split_documents([doc])
+        
+        # Add to vector store
+        self.vector_store.add_documents(documents=all_splits)
+        return all_splits
+
 
