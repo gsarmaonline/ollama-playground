@@ -1,7 +1,7 @@
-from .chatter import Chatter
+import sys
 
-
-def main():
+def rag_chatter():
+    from .chatter import Chatter
     input_text: str = "The meaning of life is 42"
     question: str =  "What is Task Decomposition?"
 
@@ -13,6 +13,18 @@ def main():
     print(f"Loaded {len(all_splits)} document splits")
     chatter.answer(question)
 
+def read_pdf(file_path: str):
+    from formats.pdf import PdfExtractor
+    extractor = PdfExtractor()
+    text = extractor.extract_with_pdfplumber(file_path)
+    return text
+
+def main(args: list[str]):
+    if args:
+        print(read_pdf(args[0]))
+    else:
+        print("No PDF file path provided.")
+
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
